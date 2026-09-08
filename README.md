@@ -1,0 +1,38 @@
+# langchain-infinispan
+
+An integration package connecting [Infinispan](https://infinispan.org/) and [LangChain](https://www.langchain.com/).
+
+## Installation
+
+```bash
+pip install langchain-infinispan
+```
+
+## Usage
+
+```python
+from langchain_infinispan import InfinispanVectorStore
+from langchain_openai import OpenAIEmbeddings
+
+vector_store = InfinispanVectorStore(
+    embedding=OpenAIEmbeddings(),
+    cache_name="my_vectors",
+    ispn_url="http://localhost:11222",
+    ispn_user="admin",
+    ispn_password="password",
+)
+
+# Add documents
+vector_store.add_texts(
+    ["Hello world", "Infinispan is fast"],
+    metadatas=[{"source": "greeting"}, {"source": "fact"}],
+)
+
+# Search
+results = vector_store.similarity_search("hello", k=2)
+```
+
+## Requirements
+
+- Infinispan 15+ with vector search support
+- Python 3.10+
