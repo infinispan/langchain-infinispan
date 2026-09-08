@@ -90,7 +90,7 @@ def test_build_vector_query(fake_embeddings: FakeEmbeddings) -> None:
     assert "i.embedding <-> [1.0,2.0,3.0]~3" in query
 
 
-def test_build_vector_query_with_filter(fake_embeddings: FakeEmbeddings) -> None:
+def test_build_vector_query_with_dict_filter(fake_embeddings: FakeEmbeddings) -> None:
     store = InfinispanVectorStore(
         embedding=fake_embeddings,
         dimension=3,
@@ -98,9 +98,27 @@ def test_build_vector_query_with_filter(fake_embeddings: FakeEmbeddings) -> None
         register_schema=False,
     )
     query = store._build_vector_query(
-        [1.0, 2.0, 3.0], k=4, filter="i.text = 'hello'"
+        [1.0, 2.0, 3.0], k=4, filter={"source": "web"}
     )
-    assert "filtering(i.text = 'hello')" in query
+    assert "join i.metadata m0" in query
+    assert "filtering(m0.name='source' and m0.value = 'web')" in query
+
+
+def test_build_vector_query_with_structured_filter(
+    fake_embeddings: FakeEmbeddings,
+) -> None:
+    from langchain_core.structured_query import Comparator, Comparison
+
+    store = InfinispanVectorStore(
+        embedding=fake_embeddings,
+        dimension=3,
+        create_cache=False,
+        register_schema=False,
+    )
+    f = Comparison(comparator=Comparator.GT, attribute="price", value=10.0)
+    query = store._build_vector_query([1.0, 2.0, 3.0], k=4, filter=f)
+    assert "join i.metadata m0" in query
+    assert "filtering(m0.name='price' and m0.value_float > 10.0)" in query
 
 
 def test_add_texts_generates_ids(fake_embeddings: FakeEmbeddings) -> None:
@@ -121,7 +139,7 @@ def test_add_texts_generates_ids(fake_embeddings: FakeEmbeddings) -> None:
     assert client.put.call_count == 2
 
 
-def test_add_texts_with_metadata(fake_embeddings: FakeEmbeddings) -> None:
+def test_add_texts_with_string_metadata(fake_embeddings: FakeEmbeddings) -> None:
     from langchain_infinispan.client import InfinispanClient
 
     client = MagicMock(spec=InfinispanClient)
@@ -143,6 +161,34 @@ def test_add_texts_with_metadata(fake_embeddings: FakeEmbeddings) -> None:
     item = call_args[0][2]
     assert item["text"] == "hello"
     assert item["metadata"] == [{"name": "source", "value": "test"}]
+
+
+def test_add_texts_with_typed_metadata(fake_embeddings: FakeEmbeddings) -> None:
+    from langchain_infinispan.client import InfinispanClient
+
+    client = MagicMock(spec=InfinispanClient)
+    store = InfinispanVectorStore(
+        embedding=fake_embeddings,
+        client=client,
+        create_cache=False,
+        register_schema=False,
+    )
+    store._schema_registered = True
+
+    store.add_texts(
+        ["hello"],
+        metadatas=[{"source": "test", "page": 42, "score": 0.95}],
+        ids=["id1"],
+    )
+    call_args = client.put.call_args
+    item = call_args[0][2]
+    meta = item["metadata"]
+    source_entry = next(e for e in meta if e["name"] == "source")
+    page_entry = next(e for e in meta if e["name"] == "page")
+    score_entry = next(e for e in meta if e["name"] == "score")
+    assert source_entry == {"name": "source", "value": "test"}
+    assert page_entry == {"name": "page", "value": "42", "value_int": 42}
+    assert score_entry == {"name": "score", "value": "0.95", "value_float": 0.95}
 
 
 def test_delete(fake_embeddings: FakeEmbeddings) -> None:

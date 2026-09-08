@@ -32,6 +32,10 @@ message {metadata_name} {{
    optional string name = 1;
    // @Basic(projectable=true)
    optional string value = 2;
+   // @Basic(projectable=true)
+   optional int64 value_int = 3;
+   // @Basic(projectable=true)
+   optional double value_float = 4;
 }}
 
 // @Indexed

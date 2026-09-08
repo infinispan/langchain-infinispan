@@ -1,12 +1,13 @@
-import json
 import logging
 import uuid
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
+from langchain_core.structured_query import FilterDirective
 from langchain_core.vectorstores import VectorStore
 
+from langchain_infinispan._filters import FilterResult, translate_filter
 from langchain_infinispan._utilities import (
     DEFAULT_CACHE_CONFIG_TEMPLATE,
     DistanceStrategy,
@@ -21,6 +22,40 @@ _DEFAULT_ITEM_NAME = "LangChainItem"
 _DEFAULT_METADATA_NAME = "LangChainMetadata"
 _DEFAULT_CACHE_NAME = "langchain_vectors"
 _DEFAULT_DISTANCE = 3
+
+
+def _serialize_metadata_entry(key: str, value: Any) -> Dict[str, Any]:
+    """Serialize a metadata key-value pair with type-aware fields.
+
+    Stores the value in the appropriate typed field so that Infinispan
+    can filter on it using the correct column (value, value_int, value_float).
+    """
+    entry: Dict[str, Any] = {"name": key, "value": str(value)}
+    if isinstance(value, int) and not isinstance(value, bool):
+        entry["value_int"] = value
+    elif isinstance(value, float):
+        entry["value_float"] = value
+    return entry
+
+
+def _deserialize_metadata(raw_metadata: Any) -> Dict[str, Any]:
+    """Deserialize metadata entries back to a dict, recovering typed values."""
+    metadata: Dict[str, Any] = {}
+    if not isinstance(raw_metadata, list):
+        return metadata
+    for entry in raw_metadata:
+        if not isinstance(entry, dict):
+            continue
+        name = entry.get("name", "")
+        if not name:
+            continue
+        if "value_int" in entry and entry["value_int"] is not None:
+            metadata[name] = int(entry["value_int"])
+        elif "value_float" in entry and entry["value_float"] is not None:
+            metadata[name] = float(entry["value_float"])
+        else:
+            metadata[name] = entry.get("value", "")
+    return metadata
 
 
 class InfinispanVectorStore(VectorStore):
@@ -196,15 +231,14 @@ class InfinispanVectorStore(VectorStore):
             metadatas = [{} for _ in texts_list]
 
         for id_, text, emb, meta in zip(ids, texts_list, embeddings, metadatas):
-            metadata_entries = [
-                {"name": k, "value": str(v)} for k, v in meta.items()
-            ]
             item = {
                 "_type": self.entity_type,
                 "id": id_,
                 "text": text,
                 "embedding": emb,
-                "metadata": metadata_entries,
+                "metadata": [
+                    _serialize_metadata_entry(k, v) for k, v in meta.items()
+                ],
             }
             self._client.put(self._cache_name, id_, item)
 
@@ -229,15 +263,14 @@ class InfinispanVectorStore(VectorStore):
             metadatas = [{} for _ in texts]
 
         for id_, text, emb, meta in zip(ids, texts, embeddings, metadatas):
-            metadata_entries = [
-                {"name": k, "value": str(v)} for k, v in meta.items()
-            ]
             item = {
                 "_type": self.entity_type,
                 "id": id_,
                 "text": text,
                 "embedding": emb,
-                "metadata": metadata_entries,
+                "metadata": [
+                    _serialize_metadata_entry(k, v) for k, v in meta.items()
+                ],
             }
             self._client.put(self._cache_name, id_, item)
 
@@ -263,22 +296,29 @@ class InfinispanVectorStore(VectorStore):
         self,
         embedding: List[float],
         k: int = 4,
-        filter: Optional[str] = None,
+        filter: Optional[Union[Dict[str, Any], FilterDirective]] = None,
     ) -> str:
         vector_str = "[" + ",".join(str(v) for v in embedding) + "]"
-        query = (
-            f"select i, score(i) from {self.entity_type} i "
-            f"where i.embedding <-> {vector_str}~{self._distance}"
+
+        filter_result = translate_filter(filter)
+        join_part = ""
+        filtering_part = ""
+        if filter_result is not None:
+            join_part = " " + filter_result.join if filter_result.join else ""
+            filtering_part = f" filtering({filter_result.query})"
+
+        return (
+            f"select i, score(i) from {self.entity_type} i"
+            f"{join_part}"
+            f" where i.embedding <-> {vector_str}~{self._distance}"
+            f"{filtering_part}"
         )
-        if filter:
-            query += f" filtering({filter})"
-        return query
 
     def similarity_search(
         self,
         query: str,
         k: int = 4,
-        filter: Optional[str] = None,
+        filter: Optional[Union[Dict[str, Any], FilterDirective]] = None,
         **kwargs: Any,
     ) -> List[Document]:
         """Return documents most similar to query.
@@ -286,7 +326,9 @@ class InfinispanVectorStore(VectorStore):
         Args:
             query: Text to search for.
             k: Number of results to return.
-            filter: Optional Ickle query filter expression.
+            filter: Optional filter — either a dict for simple equality
+                matching (e.g. ``{"source": "web"}``) or a langchain-core
+                ``FilterDirective`` for complex expressions.
 
         Returns:
             List of Documents most similar to the query.
@@ -300,7 +342,7 @@ class InfinispanVectorStore(VectorStore):
         self,
         query: str,
         k: int = 4,
-        filter: Optional[str] = None,
+        filter: Optional[Union[Dict[str, Any], FilterDirective]] = None,
         **kwargs: Any,
     ) -> List[Tuple[Document, float]]:
         """Return documents most similar to query, with scores.
@@ -308,7 +350,7 @@ class InfinispanVectorStore(VectorStore):
         Args:
             query: Text to search for.
             k: Number of results to return.
-            filter: Optional Ickle query filter expression.
+            filter: Optional filter — dict or ``FilterDirective``.
 
         Returns:
             List of (Document, score) tuples.
@@ -322,7 +364,7 @@ class InfinispanVectorStore(VectorStore):
         self,
         embedding: List[float],
         k: int = 4,
-        filter: Optional[str] = None,
+        filter: Optional[Union[Dict[str, Any], FilterDirective]] = None,
         **kwargs: Any,
     ) -> List[Document]:
         """Return documents most similar to the given embedding vector."""
@@ -335,7 +377,7 @@ class InfinispanVectorStore(VectorStore):
         self,
         embedding: List[float],
         k: int = 4,
-        filter: Optional[str] = None,
+        filter: Optional[Union[Dict[str, Any], FilterDirective]] = None,
         **kwargs: Any,
     ) -> List[Tuple[Document, float]]:
         """Return documents most similar to the given embedding, with scores."""
@@ -349,16 +391,7 @@ class InfinispanVectorStore(VectorStore):
             score = hit.get("score", 0.0) if isinstance(hit, dict) else 0.0
 
             text = hit_data.get("text", "")
-            metadata: Dict[str, Any] = {}
-
-            raw_metadata = hit_data.get("metadata", [])
-            if isinstance(raw_metadata, list):
-                for entry in raw_metadata:
-                    if isinstance(entry, dict):
-                        name = entry.get("name", "")
-                        value = entry.get("value", "")
-                        if name:
-                            metadata[name] = value
+            metadata = _deserialize_metadata(hit_data.get("metadata", []))
 
             doc = Document(page_content=text, metadata=metadata)
             results.append((doc, float(score)))
