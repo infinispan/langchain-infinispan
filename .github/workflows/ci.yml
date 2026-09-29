@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: libs/infinispan
+
+jobs:
+  lint-type-unit:
+    name: lint / type / unit (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "libs/infinispan/uv.lock"
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --all-groups --frozen
+
+      - name: Lint
+        run: uv run --group lint ruff check .
+
+      - name: Type check
+        run: uv run --group typing mypy langchain_infinispan
+
+      - name: Unit tests
+        run: uv run --group test pytest tests/unit_tests
+
+  integration:
+    name: integration (py3.12)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "libs/infinispan/uv.lock"
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --all-groups --frozen
+
+      # The integration tests start and stop their own Infinispan server via
+      # Docker (available on GitHub-hosted runners), so no service container is
+      # needed here.
+      - name: Integration tests
+        run: uv run --group test --group test_integration pytest tests/integration_tests

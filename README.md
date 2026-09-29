@@ -1,5 +1,7 @@
 # langchain-infinispan
 
+[![CI](https://github.com/infinispan/langchain-infinispan/actions/workflows/ci.yml/badge.svg)](https://github.com/infinispan/langchain-infinispan/actions/workflows/ci.yml)
+
 This repository contains LangChain integrations for [Infinispan](https://infinispan.org/).
 
 ## Packages
