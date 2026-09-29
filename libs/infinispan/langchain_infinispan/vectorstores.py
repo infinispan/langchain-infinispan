@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
@@ -284,6 +284,33 @@ class InfinispanVectorStore(VectorStore):
         for id_ in ids:
             self._client.delete(self._cache_name, id_)
         return True
+
+    def get_by_ids(self, ids: Sequence[str]) -> List[Document]:
+        """Get documents by their IDs.
+
+        Documents are returned in the same order as the requested ``ids``.
+        IDs that are not found are skipped, so the result may be shorter than
+        ``ids`` (and empty if none are found).
+
+        Args:
+            ids: IDs of the documents to retrieve.
+
+        Returns:
+            List of Documents for the IDs that were found.
+        """
+        docs: List[Document] = []
+        for id_ in ids:
+            raw = self._client.get(self._cache_name, id_)
+            if raw is None:
+                continue
+            docs.append(
+                Document(
+                    id=id_,
+                    page_content=raw.get("text", ""),
+                    metadata=_deserialize_metadata(raw.get("metadata", [])),
+                )
+            )
+        return docs
 
     def clear(self) -> None:
         """Clear all entries from the cache."""

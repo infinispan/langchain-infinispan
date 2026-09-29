@@ -203,6 +203,60 @@ def test_add_texts_with_typed_metadata(fake_embeddings: FakeEmbeddings) -> None:
     assert score_entry == {"name": "score", "value": "0.95", "value_float": 0.95}
 
 
+def test_get_by_ids_preserves_order(fake_embeddings: FakeEmbeddings) -> None:
+    from langchain_infinispan.client import InfinispanClient
+
+    stored = {
+        "id1": {"text": "first", "metadata": [{"name": "source", "value": "a"}]},
+        "id2": {"text": "second", "metadata": []},
+    }
+    client = MagicMock(spec=InfinispanClient)
+    client.get.side_effect = lambda cache, key: stored.get(key)
+    store = InfinispanVectorStore(
+        embedding=fake_embeddings,
+        client=client,
+        create_cache=False,
+        register_schema=False,
+    )
+
+    docs = store.get_by_ids(["id2", "id1"])
+    assert [d.id for d in docs] == ["id2", "id1"]
+    assert [d.page_content for d in docs] == ["second", "first"]
+    assert docs[1].metadata == {"source": "a"}
+
+
+def test_get_by_ids_skips_missing(fake_embeddings: FakeEmbeddings) -> None:
+    from langchain_infinispan.client import InfinispanClient
+
+    stored = {"id1": {"text": "first", "metadata": []}}
+    client = MagicMock(spec=InfinispanClient)
+    client.get.side_effect = lambda cache, key: stored.get(key)
+    store = InfinispanVectorStore(
+        embedding=fake_embeddings,
+        client=client,
+        create_cache=False,
+        register_schema=False,
+    )
+
+    docs = store.get_by_ids(["missing", "id1"])
+    assert [d.id for d in docs] == ["id1"]
+
+
+def test_get_by_ids_empty(fake_embeddings: FakeEmbeddings) -> None:
+    from langchain_infinispan.client import InfinispanClient
+
+    client = MagicMock(spec=InfinispanClient)
+    client.get.return_value = None
+    store = InfinispanVectorStore(
+        embedding=fake_embeddings,
+        client=client,
+        create_cache=False,
+        register_schema=False,
+    )
+
+    assert store.get_by_ids(["a", "b"]) == []
+
+
 def test_delete(fake_embeddings: FakeEmbeddings) -> None:
     from langchain_infinispan.client import InfinispanClient
 
