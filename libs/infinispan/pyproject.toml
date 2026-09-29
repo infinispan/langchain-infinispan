@@ -1,41 +1,29 @@
-[tool.poetry]
+[project]
 name = "langchain-infinispan"
 version = "0.1.0"
 description = "An integration package connecting Infinispan and LangChain"
-authors = []
+authors = [{ name = "Infinispan" }]
 readme = "README.md"
-repository = "https://github.com/infinispan/langchain-infinispan"
-license = "Apache-2.0"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "langchain-core>=1.2.5,<2.0.0",
+    "requests>=2.28.0,<3.0.0",
+]
 
-[tool.poetry.urls]
+[project.urls]
 "Source Code" = "https://github.com/infinispan/langchain-infinispan"
+repository = "https://github.com/infinispan/langchain-infinispan"
 
-[tool.poetry.dependencies]
-python = ">=3.10,<4.0"
-langchain-core = "^1.2.5"
-requests = ">=2.28.0,<3.0.0"
-
-[tool.poetry.group.test]
-optional = true
-
-[tool.poetry.group.test.dependencies]
-pytest = ">=7.3,<9.0"
-pytest-mock = "^3.10.0"
-pytest-asyncio = ">=0.21.1,<1.4.0"
-
-[tool.poetry.group.lint]
-optional = true
-
-[tool.poetry.group.lint.dependencies]
-ruff = ">=0.1.5,<0.16.0"
-
-[tool.poetry.group.typing.dependencies]
-mypy = ">=0.991,<1.20"
-
-[tool.poetry.group.test_integration]
-optional = true
-
-[tool.poetry.group.test_integration.dependencies]
+[dependency-groups]
+test = [
+    "pytest>=7.3,<9.0",
+    "pytest-mock>=3.10.0",
+    "pytest-asyncio>=0.21.1,<1.4.0",
+]
+lint = ["ruff>=0.1.5,<0.16.0"]
+typing = ["mypy>=0.991,<1.20"]
+test_integration = []
 
 [tool.ruff.lint]
 select = [
@@ -50,12 +38,12 @@ disallow_untyped_defs = "True"
 [tool.coverage.run]
 omit = ["tests/*"]
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
 [tool.pytest.ini_options]
 addopts = "--strict-markers --strict-config --durations=5"
 markers = [
   "requires: mark tests as requiring a specific library",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

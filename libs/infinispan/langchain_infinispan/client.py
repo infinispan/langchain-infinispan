@@ -3,7 +3,6 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import requests
-from requests.auth import HTTPBasicAuth
 
 from langchain_infinispan._utilities import user_agent
 

@@ -266,9 +266,9 @@ class TestLogicalOperations:
         )
         result = translate_filter(f)
         assert result is not None
-        assert (
-            result.join
-            == "join i.metadata m0 join i.metadata m1 join i.metadata m2 join i.metadata m3"
+        assert result.join == (
+            "join i.metadata m0 join i.metadata m1 "
+            "join i.metadata m2 join i.metadata m3"
         )
 
 

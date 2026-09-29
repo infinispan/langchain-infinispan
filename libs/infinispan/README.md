@@ -67,9 +67,14 @@ vector_store = InfinispanVectorStore(
 
 ## Development
 
+This project uses [`uv`](https://docs.astral.sh/uv/) for dependency management.
+
 ```bash
 cd libs/infinispan
-make dev_install
-make test
-make integration_tests  # requires running Infinispan server
+make dev_install        # uv sync --all-groups
+make test               # unit tests
+make integration_tests  # requires a running Infinispan 15+ server
 ```
+
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for full setup, prerequisites, and
+how to run each test suite.

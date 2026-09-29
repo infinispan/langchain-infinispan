@@ -1,20 +1,20 @@
 .PHONY: install dev_install test integration_tests lint format
 
 install:
-	poetry install
+	uv sync
 
 dev_install:
-	poetry install --with test,lint,typing
+	uv sync --all-groups
 
 test:
-	poetry run pytest tests/unit_tests
+	uv run --group test pytest tests/unit_tests
 
 integration_tests:
-	poetry run pytest tests/integration_tests
+	uv run --group test --group test_integration pytest tests/integration_tests
 
 lint:
-	poetry run ruff check .
+	uv run --group lint ruff check .
 
 format:
-	poetry run ruff format .
-	poetry run ruff check --fix .
+	uv run --group lint ruff format .
+	uv run --group lint ruff check --fix .

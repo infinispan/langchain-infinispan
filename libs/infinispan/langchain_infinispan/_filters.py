@@ -12,7 +12,7 @@ Supports two filter formats:
 
 from __future__ import annotations
 
-from typing import Any, Collection, Optional, Tuple
+from typing import Any, Collection, Optional
 
 from langchain_core.structured_query import (
     Comparator,
