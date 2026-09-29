@@ -411,13 +411,20 @@ class InfinispanVectorStore(VectorStore):
 
         results: List[Tuple[Document, float]] = []
         for hit in hits:
-            hit_data = hit.get("hit", hit)
-            score = hit.get("score", 0.0) if isinstance(hit, dict) else 0.0
+            inner = hit.get("hit", hit) if isinstance(hit, dict) else {}
+            # The query projects the whole entity together with score(i), so
+            # Infinispan nests the entity under the "*" key and the score under
+            # "score()". Fall back to treating `inner` as the entity itself for
+            # non-projected responses.
+            entity = inner.get("*", inner) if isinstance(inner, dict) else {}
+            score = inner.get("score()", 0.0) if isinstance(inner, dict) else 0.0
 
-            text = hit_data.get("text", "")
-            metadata = _deserialize_metadata(hit_data.get("metadata", []))
+            text = entity.get("text", "")
+            metadata = _deserialize_metadata(entity.get("metadata", []))
 
-            doc = Document(page_content=text, metadata=metadata)
+            doc = Document(
+                id=entity.get("id"), page_content=text, metadata=metadata
+            )
             results.append((doc, float(score)))
 
         return results

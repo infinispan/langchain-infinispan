@@ -122,7 +122,7 @@ class InfinispanClient:
     def query(
         self, cache_name: str, ickle_query: str, max_results: int = 10
     ) -> List[Dict[str, Any]]:
-        body = {
+        body: Dict[str, Any] = {
             "query": ickle_query,
             "max_results": max_results,
         }
@@ -137,13 +137,29 @@ class InfinispanClient:
         return result.get("hits", [])
 
     def register_schema(self, schema_name: str, schema_content: str) -> None:
-        r = self._session.post(
+        # PUT is idempotent (create-or-replace); POST returns 409 if the schema
+        # already exists, which would break re-use of a shared schema name
+        # across multiple stores/caches of the same dimension.
+        r = self._session.put(
             self._url(f"/rest/v2/schemas/{schema_name}"),
             data=schema_content,
             headers={"Content-Type": "text/plain"},
             verify=self._verify,
         )
         r.raise_for_status()
+        # Infinispan returns HTTP 200 even when a schema fails to parse; the
+        # parse error is reported in the response body instead. Surface it as
+        # an error rather than silently registering an unusable schema.
+        try:
+            payload = r.json()
+        except ValueError:
+            payload = None
+        if isinstance(payload, dict) and payload.get("error"):
+            error = payload["error"]
+            cause = error.get("cause") or error.get("message") or str(error)
+            raise ValueError(
+                f"Failed to register schema {schema_name}: {cause}"
+            )
         logger.info("Registered schema %s", schema_name)
 
     def schema_exists(self, schema_name: str) -> bool:
