@@ -10,6 +10,10 @@ which use [`uv`](https://docs.astral.sh/uv/) for dependency management.
 - [`uv`](https://docs.astral.sh/uv/) (Python package/dependency manager)
 - [`make`](https://www.gnu.org/software/make/)
 - [`git`](https://git-scm.com/)
+- A container runtime — [Docker](https://docs.docker.com/get-docker/) or
+  [Podman](https://podman.io/) — **only required for the integration tests**,
+  which start a throwaway Infinispan server in a container. Unit tests do not
+  need it.
 
 Install `uv` (any one of these):
 
@@ -64,32 +68,50 @@ make test
 
 ### Integration tests
 
-Integration tests require a running **Infinispan 15+** server with vector search
-support. They are not run in the default loop; run them when you touch the
-client or query layer.
+Integration tests exercise the client and query layer against a real
+**Infinispan 15+** server with vector search support. Run them when you touch
+the client, query, or serialization code.
 
-Start a server (Docker):
-
-```bash
-docker run -it --rm -p 11222:11222 \
-  -e USER=admin -e PASS=password \
-  infinispan/server:latest
-```
-
-Then point the tests at it and run:
+You do **not** need to start a server yourself. The test suite starts a fresh
+Infinispan container before the session and stops it afterwards, using a
+dedicated container so it never depends on — or interferes with — any server
+already running on your machine. This requires a container runtime (Docker or
+Podman); see [Prerequisites](#prerequisites).
 
 ```bash
-export INFINISPAN_URL=http://localhost:11222
-export INFINISPAN_USER=admin
-export INFINISPAN_PASSWORD=password
-
 make integration_tests
 # equivalent to:
 #   uv run --group test --group test_integration pytest tests/integration_tests
 ```
 
-Defaults if the env vars are unset: `http://localhost:11222`, `admin`,
-`password`.
+This runs both LangChain's standard `VectorStoreIntegrationTests` suite and the
+package's own integration tests. The suite's async tests are skipped
+(`has_async=False`) because the REST client is synchronous.
+
+#### Configuration
+
+All of the following are optional environment variables:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `INFINISPAN_IMAGE` | `infinispan/server:15.2` | Container image to run. |
+| `INFINISPAN_CONTAINER_RUNTIME` | auto-detect (Docker, then Podman) | Force a specific runtime. |
+| `INFINISPAN_USER` | `admin` | Server user. |
+| `INFINISPAN_PASSWORD` | `password` | Server password. |
+| `INFINISPAN_EXTERNAL_URL` | _(unset)_ | If set, the suite skips container management and runs against this already-running server instead (e.g. a CI service container). |
+
+Examples:
+
+```bash
+# Use a different Infinispan image
+INFINISPAN_IMAGE=infinispan/server:16.2 make integration_tests
+
+# Force Podman
+INFINISPAN_CONTAINER_RUNTIME=podman make integration_tests
+
+# Run against an already-running server, don't manage a container
+INFINISPAN_EXTERNAL_URL=http://localhost:11222 make integration_tests
+```
 
 ## Linting, formatting, and typing
 
@@ -122,4 +144,9 @@ make test
 uv run --group typing mypy langchain_infinispan
 ```
 
-Integration tests are appreciated when you have an Infinispan server available.
+Running the integration tests as well is appreciated — they only require a
+container runtime (Docker or Podman) and manage the Infinispan server for you:
+
+```bash
+make integration_tests
+```
