@@ -1,39 +1,26 @@
 """Integration tests for InfinispanVectorStore.
 
-These tests require a running Infinispan 15+ server.
-Set environment variables:
-  - INFINISPAN_URL (default: http://localhost:11222)
-  - INFINISPAN_USER (default: admin)
-  - INFINISPAN_PASSWORD (default: password)
+These tests require a live Infinispan 15+ server, which is started and stopped
+automatically by the ``infinispan_server`` fixture in ``conftest.py``.
 """
 
-import os
 import uuid
-from typing import List
 
 import pytest
 from langchain_core.documents import Document
-from langchain_core.embeddings import Embeddings
+from langchain_core.embeddings import DeterministicFakeEmbedding
 
 from langchain_infinispan import InfinispanVectorStore
 
-ISPN_URL = os.getenv("INFINISPAN_URL", "http://localhost:11222")
-ISPN_USER = os.getenv("INFINISPAN_USER", "admin")
-ISPN_PASSWORD = os.getenv("INFINISPAN_PASSWORD", "password")
+from .conftest import ServerInfo
+
+# Deterministic embeddings that never produce a zero-magnitude vector (which
+# would break cosine similarity on the server).
+EMBEDDING_DIM = 3
 
 
-class FakeEmbeddings(Embeddings):
-    """Deterministic fake embeddings for testing."""
-
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        return [self._embed(t) for t in texts]
-
-    def embed_query(self, text: str) -> List[float]:
-        return self._embed(text)
-
-    def _embed(self, text: str) -> List[float]:
-        h = hash(text) % 1000
-        return [float(h % 10) / 10.0 for _ in range(3)]
+def make_embeddings() -> DeterministicFakeEmbedding:
+    return DeterministicFakeEmbedding(size=EMBEDDING_DIM)
 
 
 @pytest.fixture
@@ -42,13 +29,16 @@ def cache_name() -> str:
 
 
 @pytest.fixture
-def store(cache_name: str) -> InfinispanVectorStore:
+def store(
+    cache_name: str, infinispan_server: ServerInfo
+) -> InfinispanVectorStore:
+    url, user, password = infinispan_server
     s = InfinispanVectorStore(
-        embedding=FakeEmbeddings(),
+        embedding=make_embeddings(),
         cache_name=cache_name,
-        ispn_url=ISPN_URL,
-        ispn_user=ISPN_USER,
-        ispn_password=ISPN_PASSWORD,
+        ispn_url=url,
+        ispn_user=user,
+        ispn_password=password,
         dimension=3,
         verify=False,
     )
@@ -88,14 +78,17 @@ class TestInfinispanVectorStore:
         ids = store.add_texts(["to be deleted"])
         assert store.delete(ids=ids)
 
-    def test_from_texts(self, cache_name: str) -> None:
+    def test_from_texts(
+        self, cache_name: str, infinispan_server: ServerInfo
+    ) -> None:
+        url, user, password = infinispan_server
         store = InfinispanVectorStore.from_texts(
             texts=["doc1", "doc2"],
-            embedding=FakeEmbeddings(),
+            embedding=make_embeddings(),
             cache_name=cache_name,
-            ispn_url=ISPN_URL,
-            ispn_user=ISPN_USER,
-            ispn_password=ISPN_PASSWORD,
+            ispn_url=url,
+            ispn_user=user,
+            ispn_password=password,
             dimension=3,
             verify=False,
         )
@@ -107,18 +100,21 @@ class TestInfinispanVectorStore:
             pass
         store.close()
 
-    def test_from_documents(self, cache_name: str) -> None:
+    def test_from_documents(
+        self, cache_name: str, infinispan_server: ServerInfo
+    ) -> None:
+        url, user, password = infinispan_server
         docs = [
             Document(page_content="first", metadata={"source": "a"}),
             Document(page_content="second", metadata={"source": "b"}),
         ]
         store = InfinispanVectorStore.from_documents(
             documents=docs,
-            embedding=FakeEmbeddings(),
+            embedding=make_embeddings(),
             cache_name=cache_name,
-            ispn_url=ISPN_URL,
-            ispn_user=ISPN_USER,
-            ispn_password=ISPN_PASSWORD,
+            ispn_url=url,
+            ispn_user=user,
+            ispn_password=password,
             dimension=3,
             verify=False,
         )

@@ -290,13 +290,19 @@ def test_similarity_search_by_vector(fake_embeddings: FakeEmbeddings) -> None:
     from langchain_infinispan.client import InfinispanClient
 
     client = MagicMock(spec=InfinispanClient)
+    # Mirrors the real Infinispan response shape: when the Ickle query projects
+    # the entity together with score(i), the entity is nested under "*" and the
+    # score under "score()".
     client.query.return_value = [
         {
             "hit": {
-                "text": "hello world",
-                "metadata": [{"name": "source", "value": "test"}],
+                "*": {
+                    "id": "doc-1",
+                    "text": "hello world",
+                    "metadata": [{"name": "source", "value": "test"}],
+                },
+                "score()": 0.95,
             },
-            "score": 0.95,
         }
     ]
     store = InfinispanVectorStore(
@@ -313,6 +319,7 @@ def test_similarity_search_by_vector(fake_embeddings: FakeEmbeddings) -> None:
     )
     assert len(results) == 1
     doc, score = results[0]
+    assert doc.id == "doc-1"
     assert doc.page_content == "hello world"
     assert doc.metadata == {"source": "test"}
     assert score == 0.95

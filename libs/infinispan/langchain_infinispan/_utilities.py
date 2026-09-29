@@ -26,27 +26,31 @@ def _build_proto_schema(
     dimension: int,
     similarity: str,
 ) -> str:
-    return f"""// @Indexed
+    return f"""/**
+ * @Indexed
+ */
 message {metadata_name} {{
-   // @Basic(projectable=true)
+   /** @Basic(projectable=true) */
    optional string name = 1;
-   // @Basic(projectable=true)
+   /** @Basic(projectable=true) */
    optional string value = 2;
-   // @Basic(projectable=true)
+   /** @Basic(projectable=true) */
    optional int64 value_int = 3;
-   // @Basic(projectable=true)
+   /** @Basic(projectable=true) */
    optional double value_float = 4;
 }}
 
-// @Indexed
+/**
+ * @Indexed
+ */
 message {item_name} {{
-   // @Basic(projectable=true)
+   /** @Basic(projectable=true) */
    optional string id = 1;
-   // @Basic(projectable=true)
+   /** @Basic(projectable=true) */
    optional string text = 2;
-   // @Vector(dimension={dimension}, similarity={similarity})
+   /** @Vector(dimension={dimension}, similarity={similarity}) */
    repeated float embedding = 3;
-   // @Embedded
+   /** @Embedded */
    repeated {metadata_name} metadata = 4;
 }}
 """
