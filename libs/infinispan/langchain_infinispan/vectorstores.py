@@ -7,7 +7,7 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.structured_query import FilterDirective
 from langchain_core.vectorstores import VectorStore
 
-from langchain_infinispan._filters import FilterResult, translate_filter
+from langchain_infinispan._filters import translate_filter
 from langchain_infinispan._utilities import (
     DEFAULT_CACHE_CONFIG_TEMPLATE,
     DistanceStrategy,

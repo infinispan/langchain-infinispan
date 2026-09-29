@@ -1,5 +1,5 @@
 from typing import List
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from langchain_core.embeddings import Embeddings
