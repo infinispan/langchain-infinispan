@@ -21,7 +21,6 @@ _DEFAULT_PACKAGE = "langchain"
 _DEFAULT_ITEM_NAME = "LangChainItem"
 _DEFAULT_METADATA_NAME = "LangChainMetadata"
 _DEFAULT_CACHE_NAME = "langchain_vectors"
-_DEFAULT_DISTANCE = 3
 
 
 def _serialize_metadata_entry(key: str, value: Any) -> Dict[str, Any]:
@@ -121,7 +120,6 @@ class InfinispanVectorStore(VectorStore):
         ispn_bearer_token: Optional[str] = None,
         verify: bool = True,
         dimension: Optional[int] = None,
-        distance: int = _DEFAULT_DISTANCE,
         similarity: DistanceStrategy = DistanceStrategy.COSINE,
         cache_config: Optional[str] = None,
         package_name: str = _DEFAULT_PACKAGE,
@@ -132,7 +130,6 @@ class InfinispanVectorStore(VectorStore):
     ):
         self._embedding = embedding
         self._cache_name = cache_name
-        self._distance = distance
         self._similarity = similarity
         self._package_name = package_name
         self._dimension = dimension
@@ -310,7 +307,7 @@ class InfinispanVectorStore(VectorStore):
         return (
             f"select i, score(i) from {self.entity_type} i"
             f"{join_part}"
-            f" where i.embedding <-> {vector_str}~{self._distance}"
+            f" where i.embedding <-> {vector_str}~{k}"
             f"{filtering_part}"
         )
 

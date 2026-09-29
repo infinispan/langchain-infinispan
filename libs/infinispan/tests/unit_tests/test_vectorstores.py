@@ -30,7 +30,6 @@ def test_constructor_defaults(fake_embeddings: FakeEmbeddings) -> None:
     assert store.embeddings is fake_embeddings
     assert store._cache_name == "langchain_vectors"
     assert store._similarity == DistanceStrategy.COSINE
-    assert store._distance == 3
 
 
 def test_constructor_with_client(fake_embeddings: FakeEmbeddings) -> None:
@@ -87,7 +86,20 @@ def test_build_vector_query(fake_embeddings: FakeEmbeddings) -> None:
     )
     query = store._build_vector_query([1.0, 2.0, 3.0], k=4)
     assert "select i, score(i) from langchain.LangChainItem3 i" in query
-    assert "i.embedding <-> [1.0,2.0,3.0]~3" in query
+    assert "i.embedding <-> [1.0,2.0,3.0]~4" in query
+
+
+def test_build_vector_query_k_drives_knn_count(
+    fake_embeddings: FakeEmbeddings,
+) -> None:
+    store = InfinispanVectorStore(
+        embedding=fake_embeddings,
+        dimension=3,
+        create_cache=False,
+        register_schema=False,
+    )
+    query = store._build_vector_query([1.0, 2.0, 3.0], k=10)
+    assert "i.embedding <-> [1.0,2.0,3.0]~10" in query
 
 
 def test_build_vector_query_with_dict_filter(fake_embeddings: FakeEmbeddings) -> None:
@@ -250,3 +262,28 @@ def test_similarity_search_by_vector(fake_embeddings: FakeEmbeddings) -> None:
     assert doc.page_content == "hello world"
     assert doc.metadata == {"source": "test"}
     assert score == 0.95
+
+
+def test_similarity_search_propagates_k_to_query(
+    fake_embeddings: FakeEmbeddings,
+) -> None:
+    """End-to-end: k must reach both the Ickle kNN count and max_results."""
+    from langchain_infinispan.client import InfinispanClient
+
+    client = MagicMock(spec=InfinispanClient)
+    client.query.return_value = []
+    store = InfinispanVectorStore(
+        embedding=fake_embeddings,
+        client=client,
+        dimension=3,
+        create_cache=False,
+        register_schema=False,
+    )
+    store._schema_registered = True
+
+    store.similarity_search_by_vector_with_relevance_scores([1.0, 2.0, 3.0], k=7)
+
+    args, kwargs = client.query.call_args
+    ickle = args[1]
+    assert "~7" in ickle
+    assert kwargs["max_results"] == 7
