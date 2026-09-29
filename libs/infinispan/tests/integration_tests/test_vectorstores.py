@@ -29,9 +29,7 @@ def cache_name() -> str:
 
 
 @pytest.fixture
-def store(
-    cache_name: str, infinispan_server: ServerInfo
-) -> InfinispanVectorStore:
+def store(cache_name: str, infinispan_server: ServerInfo) -> InfinispanVectorStore:
     url, user, password = infinispan_server
     s = InfinispanVectorStore(
         embedding=make_embeddings(),
@@ -63,9 +61,7 @@ class TestInfinispanVectorStore:
         assert len(results) > 0
         assert all(isinstance(r, Document) for r in results)
 
-    def test_add_and_search_with_score(
-        self, store: InfinispanVectorStore
-    ) -> None:
+    def test_add_and_search_with_score(self, store: InfinispanVectorStore) -> None:
         store.add_texts(["hello world", "goodbye world"])
 
         results = store.similarity_search_with_score("hello", k=2)
@@ -78,9 +74,7 @@ class TestInfinispanVectorStore:
         ids = store.add_texts(["to be deleted"])
         assert store.delete(ids=ids)
 
-    def test_from_texts(
-        self, cache_name: str, infinispan_server: ServerInfo
-    ) -> None:
+    def test_from_texts(self, cache_name: str, infinispan_server: ServerInfo) -> None:
         url, user, password = infinispan_server
         store = InfinispanVectorStore.from_texts(
             texts=["doc1", "doc2"],

@@ -55,9 +55,7 @@ class _FilterState:
     def join_clause(self) -> str:
         if self._counter < 0:
             return ""
-        return " ".join(
-            f"join i.metadata m{j}" for j in range(self._counter + 1)
-        )
+        return " ".join(f"join i.metadata m{j}" for j in range(self._counter + 1))
 
 
 class FilterResult:
@@ -68,9 +66,7 @@ class FilterResult:
         self.join = join
 
 
-def _map_comparison(
-    comp: Comparison, state: _FilterState
-) -> str:
+def _map_comparison(comp: Comparison, state: _FilterState) -> str:
     alias = state.next_alias()
     key = comp.attribute
     value = comp.value
@@ -160,9 +156,7 @@ def _validate_no_mixed_types(values: Collection[Any]) -> None:
         )
 
 
-def _map_operation(
-    op: Operation, state: _FilterState
-) -> str:
+def _map_operation(op: Operation, state: _FilterState) -> str:
     if op.operator == Operator.AND:
         parts = [_map_filter_directive(arg, state) for arg in op.arguments]
         return "((" + ") AND (".join(parts) + "))"
@@ -181,9 +175,7 @@ def _map_operation(
         raise ValueError(f"Unsupported operator: {op.operator}")
 
 
-def _map_filter_directive(
-    f: FilterDirective, state: _FilterState
-) -> str:
+def _map_filter_directive(f: FilterDirective, state: _FilterState) -> str:
     if isinstance(f, Comparison):
         return _map_comparison(f, state)
     elif isinstance(f, Operation):
@@ -192,9 +184,7 @@ def _map_filter_directive(
         raise ValueError(f"Unsupported filter type: {type(f).__name__}")
 
 
-def _map_dict_filter(
-    d: dict[str, Any], state: _FilterState
-) -> str:
+def _map_dict_filter(d: dict[str, Any], state: _FilterState) -> str:
     """Convert a simple dict filter to Ickle query using equality comparisons."""
     if not d:
         return ""
@@ -205,9 +195,7 @@ def _map_dict_filter(
                 comparator=Comparator.IN, attribute=key, value=list(value)
             )
         else:
-            comp = Comparison(
-                comparator=Comparator.EQ, attribute=key, value=value
-            )
+            comp = Comparison(comparator=Comparator.EQ, attribute=key, value=value)
         parts.append(_map_comparison(comp, state))
     if len(parts) == 1:
         return parts[0]

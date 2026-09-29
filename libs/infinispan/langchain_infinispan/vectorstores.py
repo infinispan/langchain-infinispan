@@ -233,9 +233,7 @@ class InfinispanVectorStore(VectorStore):
                 "id": id_,
                 "text": text,
                 "embedding": emb,
-                "metadata": [
-                    _serialize_metadata_entry(k, v) for k, v in meta.items()
-                ],
+                "metadata": [_serialize_metadata_entry(k, v) for k, v in meta.items()],
             }
             self._client.put(self._cache_name, id_, item)
 
@@ -265,9 +263,7 @@ class InfinispanVectorStore(VectorStore):
                 "id": id_,
                 "text": text,
                 "embedding": emb,
-                "metadata": [
-                    _serialize_metadata_entry(k, v) for k, v in meta.items()
-                ],
+                "metadata": [_serialize_metadata_entry(k, v) for k, v in meta.items()],
             }
             self._client.put(self._cache_name, id_, item)
 
@@ -422,9 +418,7 @@ class InfinispanVectorStore(VectorStore):
             text = entity.get("text", "")
             metadata = _deserialize_metadata(entity.get("metadata", []))
 
-            doc = Document(
-                id=entity.get("id"), page_content=text, metadata=metadata
-            )
+            doc = Document(id=entity.get("id"), page_content=text, metadata=metadata)
             results.append((doc, float(score)))
 
         return results

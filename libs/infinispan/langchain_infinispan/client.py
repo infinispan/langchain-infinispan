@@ -157,9 +157,7 @@ class InfinispanClient:
         if isinstance(payload, dict) and payload.get("error"):
             error = payload["error"]
             cause = error.get("cause") or error.get("message") or str(error)
-            raise ValueError(
-                f"Failed to register schema {schema_name}: {cause}"
-            )
+            raise ValueError(f"Failed to register schema {schema_name}: {cause}")
         logger.info("Registered schema %s", schema_name)
 
     def schema_exists(self, schema_name: str) -> bool:
