@@ -109,9 +109,7 @@ def test_build_vector_query_with_dict_filter(fake_embeddings: FakeEmbeddings) ->
         create_cache=False,
         register_schema=False,
     )
-    query = store._build_vector_query(
-        [1.0, 2.0, 3.0], k=4, filter={"source": "web"}
-    )
+    query = store._build_vector_query([1.0, 2.0, 3.0], k=4, filter={"source": "web"})
     assert "join i.metadata m0" in query
     assert "filtering(m0.name='source' and m0.value = 'web')" in query
 

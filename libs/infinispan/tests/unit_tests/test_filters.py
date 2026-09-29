@@ -127,9 +127,7 @@ class TestInFilters:
         assert "m0.value IN ('A', 'B', 'C')" in result.query
 
     def test_int_in(self) -> None:
-        f = Comparison(
-            comparator=Comparator.IN, attribute="status", value=[1, 2, 3]
-        )
+        f = Comparison(comparator=Comparator.IN, attribute="status", value=[1, 2, 3])
         result = translate_filter(f)
         assert result is not None
         assert "m0.value_int IN (1, 2, 3)" in result.query
@@ -152,9 +150,7 @@ class TestInFilters:
             translate_filter(f)
 
     def test_mixed_types_in_raises(self) -> None:
-        f = Comparison(
-            comparator=Comparator.IN, attribute="key", value=[1, "text"]
-        )
+        f = Comparison(comparator=Comparator.IN, attribute="key", value=[1, "text"])
         with pytest.raises(ValueError, match="cannot mix"):
             translate_filter(f)
 
@@ -227,24 +223,17 @@ class TestLogicalOperations:
         assert "m2.name='price'" in result.query
         assert "AND" in result.query
         assert "OR" in result.query
-        assert (
-            result.join
-            == "join i.metadata m0 join i.metadata m1 join i.metadata m2"
-        )
+        assert result.join == "join i.metadata m0 join i.metadata m1 join i.metadata m2"
 
     def test_four_metadata_joins(self) -> None:
         f = Operation(
             operator=Operator.AND,
             arguments=[
-                Comparison(
-                    comparator=Comparator.EQ, attribute="name", value="John"
-                ),
+                Comparison(comparator=Comparator.EQ, attribute="name", value="John"),
                 Operation(
                     operator=Operator.AND,
                     arguments=[
-                        Comparison(
-                            comparator=Comparator.EQ, attribute="age", value=25
-                        ),
+                        Comparison(comparator=Comparator.EQ, attribute="age", value=25),
                         Operation(
                             operator=Operator.AND,
                             arguments=[
@@ -274,17 +263,13 @@ class TestLogicalOperations:
 
 class TestEscaping:
     def test_single_quote_in_value(self) -> None:
-        f = Comparison(
-            comparator=Comparator.EQ, attribute="name", value="O'Brien"
-        )
+        f = Comparison(comparator=Comparator.EQ, attribute="name", value="O'Brien")
         result = translate_filter(f)
         assert result is not None
         assert "O''Brien" in result.query
 
     def test_single_quote_in_key(self) -> None:
-        f = Comparison(
-            comparator=Comparator.EQ, attribute="o'clock", value="noon"
-        )
+        f = Comparison(comparator=Comparator.EQ, attribute="o'clock", value="noon")
         result = translate_filter(f)
         assert result is not None
         assert "o''clock" in result.query
@@ -298,9 +283,7 @@ class TestEscaping:
         assert "C:\\\\Users\\\\test" in result.query
 
     def test_ickle_injection_in_value(self) -> None:
-        f = Comparison(
-            comparator=Comparator.EQ, attribute="name", value="x' OR 1=1 --"
-        )
+        f = Comparison(comparator=Comparator.EQ, attribute="name", value="x' OR 1=1 --")
         result = translate_filter(f)
         assert result is not None
         assert "x'' OR 1=1 --" in result.query

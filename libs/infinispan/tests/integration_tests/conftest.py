@@ -73,9 +73,7 @@ def _wait_healthy(url: str, timeout: float = 90.0) -> None:
     last_err: Exception | str = "no attempt made"
     while time.monotonic() < deadline:
         try:
-            resp = requests.get(
-                f"{url}/rest/v2/caches", auth=auth, timeout=5
-            )
+            resp = requests.get(f"{url}/rest/v2/caches", auth=auth, timeout=5)
             if resp.status_code == 200:
                 return
             last_err = f"HTTP {resp.status_code}: {resp.text[:200]}"
