@@ -43,6 +43,14 @@ class TestDictFilters:
         assert result is not None
         assert "m0.value_float = 3.14" in result.query
 
+    def test_bool_value_uses_value_string(self) -> None:
+        # bool is a subclass of int, but booleans are stored in the string
+        # ``value`` column, so filtering must target ``value`` too (not value_int).
+        result = translate_filter({"flag": True})
+        assert result is not None
+        assert "m0.value = 'True'" in result.query
+        assert "value_int" not in result.query
+
     def test_list_value_produces_in(self) -> None:
         result = translate_filter({"category": ["A", "B", "C"]})
         assert result is not None
@@ -68,6 +76,12 @@ class TestComparisonFilters:
         result = translate_filter(f)
         assert result is not None
         assert result.query == "m0.name='score' and m0.value_float = 3.14"
+
+    def test_equal_bool(self) -> None:
+        f = Comparison(comparator=Comparator.EQ, attribute="flag", value=True)
+        result = translate_filter(f)
+        assert result is not None
+        assert result.query == "m0.name='flag' and m0.value = 'True'"
 
     def test_not_equal(self) -> None:
         f = Comparison(comparator=Comparator.NE, attribute="status", value="active")
@@ -143,6 +157,21 @@ class TestInFilters:
         assert "m0.value NOT IN ('X', 'Y', 'Z')" in result.query
         assert "m0.name='category'" in result.query
         assert "OR (i.metadata is null)" in result.query
+
+    def test_bool_in_uses_value_string(self) -> None:
+        f = Comparison(comparator=Comparator.IN, attribute="flag", value=[True, False])
+        result = translate_filter(f)
+        assert result is not None
+        assert "m0.value IN ('True', 'False')" in result.query
+
+    def test_bool_and_string_in_does_not_mix(self) -> None:
+        # bools are strings here, so mixing with text must not raise.
+        f = Comparison(
+            comparator=Comparator.IN, attribute="flag", value=[True, "maybe"]
+        )
+        result = translate_filter(f)
+        assert result is not None
+        assert "m0.value IN ('True', 'maybe')" in result.query
 
     def test_empty_in_raises(self) -> None:
         f = Comparison(comparator=Comparator.IN, attribute="key", value=[])

@@ -27,16 +27,27 @@ def _escape(s: str) -> str:
     return s.replace("\\", "\\\\").replace("'", "''")
 
 
+def _is_int(value: Any) -> bool:
+    # bool is a subclass of int, but booleans are stored in the string ``value``
+    # column (see _serialize_metadata_entry), so they must not be treated as ints.
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _is_numeric(value: Any) -> bool:
+    # bool is excluded for the same reason as in _is_int: it lives in ``value``.
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
 def _value_column(values: Collection[Any]) -> str:
     if any(isinstance(v, float) for v in values):
         return "value_float"
-    if all(isinstance(v, int) for v in values):
+    if all(_is_int(v) for v in values):
         return "value_int"
     return "value"
 
 
 def _format_comparison_value(value: Any, as_float: bool = False) -> str:
-    if not isinstance(value, (int, float)):
+    if not _is_numeric(value):
         return f"'{_escape(str(value))}'"
     if as_float:
         return str(float(value))
@@ -113,7 +124,7 @@ def _map_comparison(comp: Comparison, state: _FilterState) -> str:
 
 
 def _compute_filter(alias: str, operator: str, value: Any) -> str:
-    if isinstance(value, int):
+    if _is_int(value):
         return f"{alias}.value_int {operator} {value}"
     elif isinstance(value, float):
         return f"{alias}.value_float {operator} {value}"
@@ -147,8 +158,8 @@ def _map_not_in(alias: str, key: str, values: Collection[Any]) -> str:
 
 
 def _validate_no_mixed_types(values: Collection[Any]) -> None:
-    has_numeric = any(isinstance(v, (int, float)) for v in values)
-    has_non_numeric = any(not isinstance(v, (int, float)) for v in values)
+    has_numeric = any(_is_numeric(v) for v in values)
+    has_non_numeric = any(not _is_numeric(v) for v in values)
     if has_numeric and has_non_numeric:
         raise ValueError(
             "Infinispan metadata filter IN/NOT IN cannot mix "
