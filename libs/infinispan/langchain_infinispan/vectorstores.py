@@ -394,7 +394,7 @@ class InfinispanVectorStore(VectorStore):
             List of (Document, score) tuples.
         """
         embedding = self._embedding.embed_query(query)
-        return self.similarity_search_by_vector_with_relevance_scores(
+        return self.similarity_search_with_score_by_vector(
             embedding, k=k, filter=filter, **kwargs
         )
 
@@ -406,19 +406,25 @@ class InfinispanVectorStore(VectorStore):
         **kwargs: Any,
     ) -> List[Document]:
         """Return documents most similar to the given embedding vector."""
-        docs_and_scores = self.similarity_search_by_vector_with_relevance_scores(
+        docs_and_scores = self.similarity_search_with_score_by_vector(
             embedding, k=k, filter=filter, **kwargs
         )
         return [doc for doc, _ in docs_and_scores]
 
-    def similarity_search_by_vector_with_relevance_scores(
+    def similarity_search_with_score_by_vector(
         self,
         embedding: List[float],
         k: int = 4,
         filter: Optional[Union[Dict[str, Any], FilterDirective]] = None,
         **kwargs: Any,
     ) -> List[Tuple[Document, float]]:
-        """Return documents most similar to the given embedding, with scores."""
+        """Return documents most similar to the given embedding, with scores.
+
+        The returned scores are Infinispan's **native** similarity scores (the
+        Lucene ``score(i)`` of each hit), not normalized relevance scores. For
+        relevance scores in ``[0, 1]`` use
+        :meth:`similarity_search_with_relevance_scores`.
+        """
         self._ensure_setup(len(embedding))
         ickle = self._build_vector_query(embedding, k=k, filter=filter)
         hits = self._client.query(self._cache_name, ickle, max_results=k)
