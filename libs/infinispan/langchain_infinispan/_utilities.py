@@ -3,10 +3,22 @@ from importlib.metadata import version
 
 
 class DistanceStrategy(str, Enum):
+    """Vector similarity functions supported by Infinispan.
+
+    Each value is the exact token Infinispan accepts in the proto
+    ``@Vector(similarity=...)`` annotation; it maps to a Lucene
+    ``VectorSimilarityFunction`` on the server:
+
+    - ``COSINE``            -> Lucene ``COSINE``
+    - ``INNER_PRODUCT``     -> Lucene ``DOT_PRODUCT`` (expects unit-length vectors)
+    - ``MAX_INNER_PRODUCT`` -> Lucene ``MAXIMUM_INNER_PRODUCT``
+    - ``L2``                -> Lucene ``EUCLIDEAN`` (scored on squared L2 distance)
+    """
+
     COSINE = "COSINE"
-    DOT_PRODUCT = "DOT_PRODUCT"
-    EUCLIDEAN = "EUCLIDEAN"
-    L2_SQUARE = "L2_SQUARE"
+    INNER_PRODUCT = "INNER_PRODUCT"
+    MAX_INNER_PRODUCT = "MAX_INNER_PRODUCT"
+    L2 = "L2"
 
 
 DEFAULT_CACHE_CONFIG_TEMPLATE = """<distributed-cache name="{cache_name}">
