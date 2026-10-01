@@ -255,6 +255,49 @@ def test_get_by_ids_empty(fake_embeddings: FakeEmbeddings) -> None:
     assert store.get_by_ids(["a", "b"]) == []
 
 
+@pytest.mark.parametrize(
+    "strategy",
+    [
+        DistanceStrategy.COSINE,
+        DistanceStrategy.INNER_PRODUCT,
+        DistanceStrategy.L2,
+    ],
+)
+def test_relevance_score_fn_is_identity_for_bounded_metrics(
+    fake_embeddings: FakeEmbeddings, strategy: DistanceStrategy
+) -> None:
+    """COSINE/INNER_PRODUCT/L2 already return [0, 1] scores from the server."""
+    store = InfinispanVectorStore(
+        embedding=fake_embeddings,
+        similarity=strategy,
+        create_cache=False,
+        register_schema=False,
+    )
+    fn = store._select_relevance_score_fn()
+    assert fn(0.0) == 0.0
+    assert fn(0.5) == 0.5
+    assert fn(1.0) == 1.0
+
+
+def test_relevance_score_fn_squashes_max_inner_product(
+    fake_embeddings: FakeEmbeddings,
+) -> None:
+    """MAX_INNER_PRODUCT is unbounded; it must be squashed into (0, 1)."""
+    store = InfinispanVectorStore(
+        embedding=fake_embeddings,
+        similarity=DistanceStrategy.MAX_INNER_PRODUCT,
+        create_cache=False,
+        register_schema=False,
+    )
+    fn = store._select_relevance_score_fn()
+    assert fn(0.0) == 0.0
+    assert fn(1.0) == 0.5
+    assert fn(3.0) == 0.75
+    # Monotonic and bounded below 1 even for large scores.
+    assert fn(1.0) < fn(2.0) < fn(3.0)
+    assert fn(1_000_000.0) < 1.0
+
+
 def test_delete(fake_embeddings: FakeEmbeddings) -> None:
     from langchain_infinispan.client import InfinispanClient
 
