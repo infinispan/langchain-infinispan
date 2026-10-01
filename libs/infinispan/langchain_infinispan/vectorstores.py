@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
@@ -159,6 +159,24 @@ class InfinispanVectorStore(VectorStore):
     @property
     def embeddings(self) -> Optional[Embeddings]:
         return self._embedding
+
+    def _select_relevance_score_fn(self) -> Callable[[float], float]:
+        """Map the native Infinispan score to a ``[0, 1]`` relevance score.
+
+        Infinispan returns a Lucene similarity score where higher means more
+        similar:
+
+        - ``COSINE``, ``INNER_PRODUCT`` and ``L2`` already fall in ``[0, 1]``,
+          so relevance is the identity. ``INNER_PRODUCT`` requires unit-length
+          (normalized) vectors; the server rejects non-normalized vectors at
+          write time.
+        - ``MAX_INNER_PRODUCT`` is unbounded in ``(0, inf)``; it is squashed
+          into ``(0, 1)`` with ``s / (1 + s)``, which is monotonic and
+          preserves ranking.
+        """
+        if self._similarity == DistanceStrategy.MAX_INNER_PRODUCT:
+            return lambda s: s / (1.0 + s)
+        return lambda s: s
 
     @property
     def entity_type(self) -> str:

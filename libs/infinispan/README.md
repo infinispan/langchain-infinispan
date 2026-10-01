@@ -60,6 +60,21 @@ vector_store = InfinispanVectorStore(
 )
 ```
 
+### Distance strategies
+
+Pass `similarity=DistanceStrategy.<X>` to choose the vector similarity function
+(default `COSINE`):
+
+| `DistanceStrategy` | Notes |
+|---|---|
+| `COSINE` | Default. |
+| `L2` | Euclidean (squared L2) distance. |
+| `INNER_PRODUCT` | **Requires unit-length (normalized) vectors** — the server rejects non-normalized vectors at write time. |
+| `MAX_INNER_PRODUCT` | Allows non-normalized vectors. |
+
+Relevance scores from `similarity_search_with_relevance_scores` are normalized
+to `[0, 1]` for all strategies.
+
 ## Requirements
 
 - Infinispan 15+ with vector search support
