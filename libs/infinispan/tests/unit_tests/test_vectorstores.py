@@ -312,9 +312,7 @@ def test_similarity_search_by_vector(fake_embeddings: FakeEmbeddings) -> None:
     )
     store._schema_registered = True
 
-    results = store.similarity_search_by_vector_with_relevance_scores(
-        [1.0, 2.0, 3.0], k=1
-    )
+    results = store.similarity_search_with_score_by_vector([1.0, 2.0, 3.0], k=1)
     assert len(results) == 1
     doc, score = results[0]
     assert doc.id == "doc-1"
@@ -340,7 +338,7 @@ def test_similarity_search_propagates_k_to_query(
     )
     store._schema_registered = True
 
-    store.similarity_search_by_vector_with_relevance_scores([1.0, 2.0, 3.0], k=7)
+    store.similarity_search_with_score_by_vector([1.0, 2.0, 3.0], k=7)
 
     args, kwargs = client.query.call_args
     ickle = args[1]
