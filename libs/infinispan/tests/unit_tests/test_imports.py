@@ -7,9 +7,17 @@ def test_all_exports() -> None:
             "DistanceStrategy",
             "InfinispanClient",
             "InfinispanVectorStore",
+            "__version__",
         ]
     )
     assert sorted(__all__) == expected
+
+
+def test_version_is_exposed() -> None:
+    from langchain_infinispan import __version__
+
+    assert isinstance(__version__, str)
+    assert __version__
 
 
 def test_import_vector_store() -> None:
