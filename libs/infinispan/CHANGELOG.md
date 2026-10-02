@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `langchain_infinispan.__version__`, resolved from the installed package
+  metadata.
+
 ## [0.1.0] - 2026-10-02
 
 Initial release of the Infinispan integration for LangChain.
