@@ -2,18 +2,32 @@
 name = "langchain-infinispan"
 version = "0.1.0"
 description = "An integration package connecting Infinispan and LangChain"
-authors = [{ name = "Infinispan" }]
+authors = [{ name = "Infinispan", email = "vittorio@infinispan.org" }]
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.10,<4.0"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "langchain-core>=1.2.5,<2.0.0",
     "requests>=2.28.0,<3.0.0",
 ]
 
 [project.urls]
-"Source Code" = "https://github.com/infinispan/langchain-infinispan"
-repository = "https://github.com/infinispan/langchain-infinispan"
+Homepage = "https://infinispan.org/"
+Repository = "https://github.com/infinispan/langchain-infinispan"
+Documentation = "https://github.com/infinispan/langchain-infinispan/blob/main/libs/infinispan/README.md"
+Issues = "https://github.com/infinispan/langchain-infinispan/issues"
+Changelog = "https://github.com/infinispan/langchain-infinispan/releases"
 
 [dependency-groups]
 test = [
@@ -48,3 +62,14 @@ markers = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["langchain_infinispan"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "langchain_infinispan/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+]
