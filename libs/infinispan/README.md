@@ -69,11 +69,15 @@ Pass `similarity=DistanceStrategy.<X>` to choose the vector similarity function
 |---|---|
 | `COSINE` | Default. |
 | `L2` | Euclidean (squared L2) distance. |
-| `INNER_PRODUCT` | **Requires unit-length (normalized) vectors** — the server rejects non-normalized vectors at write time. |
+| `INNER_PRODUCT` | **Requires unit-length (normalized) vectors.** On **Infinispan 15.1+** the server rejects non-normalized vectors at write time (as an HTTP 500 `HSEARCH600185` error); on the 15.0.x line this is **not** enforced and non-normalized vectors are accepted. |
 | `MAX_INNER_PRODUCT` | Allows non-normalized vectors. |
 
 Relevance scores from `similarity_search_with_relevance_scores` are normalized
 to `[0, 1]` for all strategies.
+
+> **Note:** `INNER_PRODUCT` normalization is only enforced from Infinispan 15.1
+> onward. If you use `INNER_PRODUCT` on a 15.0.x server, make sure your embeddings
+> are unit-length yourself — the server will not reject non-normalized vectors.
 
 ## Requirements
 
