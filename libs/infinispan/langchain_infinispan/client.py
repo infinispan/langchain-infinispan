@@ -55,7 +55,12 @@ class InfinispanClient:
             self._url(f"/rest/v2/caches/{cache_name}"),
             verify=self._verify,
         )
-        return r.status_code == 200
+        # Infinispan answers HEAD on an existing cache with 204 (No Content),
+        # not 200, so treat any 2xx success status as "exists". Checking only
+        # for 200 made cache_exists() always return False, so get_or_create_cache
+        # would try to re-create an existing cache and fail with HTTP 400
+        # (ISPN000507: Cache already exists).
+        return r.ok
 
     def create_cache(self, cache_name: str, config: str) -> None:
         r = self._session.post(
