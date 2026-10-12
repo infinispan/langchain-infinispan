@@ -1,0 +1,54 @@
+[id='proc_creating_vector_store-{context}']
+= Creating the vector store
+
+Create an `InfinispanVectorStore` instance to connect to {brandname} Server.
+Three authentication methods are available.
+
+.Username and password authentication
+
+[source,python]
+----
+from langchain_infinispan import InfinispanVectorStore
+from langchain_openai import OpenAIEmbeddings
+
+vector_store = InfinispanVectorStore(
+    embedding=OpenAIEmbeddings(),
+    cache_name="my_vectors",
+    ispn_url="http://localhost:11222",
+    ispn_user="admin",
+    ispn_password="password",
+)
+----
+
+.Bearer token authentication
+
+[source,python]
+----
+vector_store = InfinispanVectorStore(
+    embedding=OpenAIEmbeddings(),
+    cache_name="my_vectors",
+    ispn_url="http://localhost:11222",
+    ispn_bearer_token="my-token",
+)
+----
+
+.Pre-built client
+
+[source,python]
+----
+from langchain_infinispan import InfinispanVectorStore, InfinispanClient
+
+client = InfinispanClient(
+    url="http://localhost:11222",
+    username="admin",
+    password="password",
+)
+
+vector_store = InfinispanVectorStore(
+    embedding=OpenAIEmbeddings(),
+    cache_name="my_vectors",
+    client=client,
+)
+----
+
+Using a pre-built client allows you to share a single HTTP session across multiple vector store instances.

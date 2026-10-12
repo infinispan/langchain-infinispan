@@ -1,0 +1,47 @@
+[id='con_metadata_filtering-{context}']
+= How metadata filtering works
+
+The {brandname} vector store supports filtering similarity search results based on document metadata.
+
+Metadata values are stored with type-aware fields in the Protobuf schema:
+
+* String values are stored in the `value` field.
+* Integer values are stored in both `value` and `value_int` fields.
+* Float values are stored in both `value` and `value_float` fields.
+
+Two filter formats are supported:
+
+.Dictionary filters
+Simple key-value equality matching. List values are translated to `IN` clauses.
+
+[source,python]
+----
+results = vector_store.similarity_search(
+    "hello",
+    filter={"source": "greeting"},
+)
+
+results = vector_store.similarity_search(
+    "hello",
+    filter={"category": ["news", "tech"]},
+)
+----
+
+.LangChain structured filters
+Use `Comparison` and `Operation` objects from `langchain_core.structured_query` for complex filter expressions.
+
+[source,python]
+----
+from langchain_core.structured_query import Comparison, Comparator
+
+results = vector_store.similarity_search(
+    "hello",
+    filter=Comparison(
+        comparator=Comparator.GT,
+        attribute="year",
+        value=2020,
+    ),
+)
+----
+
+Filter expressions are translated to {brandname} Ickle queries with metadata joins for each filtered field.
