@@ -1,0 +1,16 @@
+[id='proc_starting_infinispan-{context}']
+= Starting {brandname} Server
+
+Start an {brandname} Server instance for your LangChain application to connect to.
+
+.Procedure
+
+. Run {brandname} Server with Docker:
++
+[source,bash]
+----
+docker run -p 11222:11222 -e USER="admin" -e PASS="password" quay.io/infinispan/server:latest
+----
+
+The server starts with default settings and creates an `admin` user.
+The REST API is available at `http://localhost:11222`.

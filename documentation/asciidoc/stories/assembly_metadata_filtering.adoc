@@ -1,0 +1,13 @@
+ifdef::context[:parent-context: {context}]
+[id='metadata-filtering']
+:context: metadata-filtering
+= Metadata filtering
+
+[role="_abstract"]
+Filter similarity search results based on document metadata using {brandname} Ickle queries.
+
+include::{topics}/con_metadata_filtering.adoc[leveloffset=+1]
+include::{topics}/ref_supported_filter_operations.adoc[leveloffset=+1]
+
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

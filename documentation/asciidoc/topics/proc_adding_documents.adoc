@@ -1,0 +1,43 @@
+[id='proc_adding_documents-{context}']
+= Adding documents
+
+Add documents to the {brandname} vector store. Documents are automatically embedded and stored with their metadata.
+
+.Adding texts
+
+[source,python]
+----
+ids = vector_store.add_texts(
+    texts=["Hello world", "Infinispan is fast"],
+    metadatas=[{"source": "greeting"}, {"source": "fact"}],
+)
+----
+
+.Adding LangChain Documents
+
+[source,python]
+----
+from langchain_core.documents import Document
+
+docs = [
+    Document(page_content="Hello world", metadata={"source": "greeting"}),
+    Document(page_content="Infinispan is fast", metadata={"source": "fact"}),
+]
+ids = vector_store.add_documents(docs)
+----
+
+.Creating from texts
+
+[source,python]
+----
+vector_store = InfinispanVectorStore.from_texts(
+    texts=["Hello world", "Infinispan is fast"],
+    embedding=my_embeddings,
+    metadatas=[{"source": "greeting"}, {"source": "fact"}],
+    ispn_url="http://localhost:11222",
+    ispn_user="admin",
+    ispn_password="password",
+)
+----
+
+Unique IDs are auto-generated for each document. You can also provide custom IDs with the `ids` parameter.

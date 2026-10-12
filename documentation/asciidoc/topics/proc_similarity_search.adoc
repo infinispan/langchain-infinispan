@@ -1,0 +1,52 @@
+[id='proc_similarity_search-{context}']
+= Performing similarity search
+
+Search for documents similar to a query using the {brandname} vector store.
+
+.Basic similarity search
+
+[source,python]
+----
+results = vector_store.similarity_search("hello", k=5)
+for doc in results:
+    print(doc.page_content, doc.metadata)
+----
+
+.Search with scores
+
+[source,python]
+----
+results = vector_store.similarity_search_with_score("hello", k=5)
+for doc, score in results:
+    print(f"{doc.page_content} (score: {score})")
+----
+
+.Search with relevance scores
+
+Relevance scores are normalized to `[0, 1]` for all distance strategies.
+
+[source,python]
+----
+results = vector_store.similarity_search_with_relevance_scores("hello", k=5)
+for doc, score in results:
+    print(f"{doc.page_content} (relevance: {score})")
+----
+
+.Search by embedding vector
+
+[source,python]
+----
+embedding = my_embeddings.embed_query("hello")
+results = vector_store.similarity_search_by_vector(embedding, k=5)
+----
+
+.Search with metadata filter
+
+[source,python]
+----
+results = vector_store.similarity_search(
+    "hello",
+    k=5,
+    filter={"source": "greeting"},
+)
+----

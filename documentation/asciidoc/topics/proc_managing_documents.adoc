@@ -1,0 +1,34 @@
+[id='proc_managing_documents-{context}']
+= Managing documents
+
+Delete, retrieve, and clear documents in the {brandname} vector store.
+
+.Deleting documents by ID
+
+[source,python]
+----
+vector_store.delete(ids=["id1", "id2"])
+----
+
+.Retrieving documents by ID
+
+[source,python]
+----
+docs = vector_store.get_by_ids(["id1", "id2"])
+----
+
+.Clearing all documents
+
+[source,python]
+----
+vector_store.clear()
+----
+
+.Closing the connection
+
+Close the HTTP session when you are done with the vector store.
+
+[source,python]
+----
+vector_store.close()
+----

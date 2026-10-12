@@ -1,0 +1,14 @@
+[id='con_overview-{context}']
+= What is {langchain_ispn}?
+
+{langchain_ispn} is a community integration that connects link:https://www.langchain.com/[LangChain] with {brandname}.
+
+It provides an `InfinispanVectorStore` that implements the LangChain `VectorStore` interface, enabling:
+
+* Store and search document embeddings using {brandname} vector search capabilities with Ickle query language.
+* Metadata filtering with support for typed fields (strings, integers, floats).
+* Multiple distance strategies: Cosine, L2, Inner Product, and Max Inner Product.
+* Automatic Protobuf schema registration and indexed cache creation.
+* Three authentication methods: username/password, bearer token, or pre-built client.
+
+The integration uses the {brandname} REST API for all operations.

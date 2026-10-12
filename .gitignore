@@ -46,3 +46,4 @@ env/
 venv/
 ENV/
 poetry.lock
+.idea

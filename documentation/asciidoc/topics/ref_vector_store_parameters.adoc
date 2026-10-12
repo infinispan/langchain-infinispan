@@ -1,0 +1,74 @@
+[id='ref_vector_store_parameters-{context}']
+= Vector store parameters
+
+The following table describes the parameters for `InfinispanVectorStore`.
+
+[%header,cols="2,1,2,3"]
+|===
+| Parameter | Type | Default | Description
+
+| `embedding`
+| `Embeddings`
+| (required)
+| The embedding model to use for vectorizing text.
+
+| `cache_name`
+| `str`
+| `langchain_vectors`
+| Name of the {brandname} cache to store vectors.
+
+| `client`
+| `InfinispanClient`
+| `None`
+| Pre-built client instance. If provided, connection parameters are ignored.
+
+| `ispn_url`
+| `str`
+| `http://localhost:11222`
+| {brandname} Server URL.
+
+| `ispn_user`
+| `str`
+| `None`
+| Username for HTTP Digest authentication.
+
+| `ispn_password`
+| `str`
+| `None`
+| Password for HTTP Digest authentication.
+
+| `ispn_bearer_token`
+| `str`
+| `None`
+| Bearer token for authentication.
+
+| `verify`
+| `bool`
+| `True`
+| Whether to verify TLS certificates.
+
+| `dimension`
+| `int`
+| `None`
+| Embedding dimension. Auto-detected from the embedding model if not set.
+
+| `similarity`
+| `DistanceStrategy`
+| `COSINE`
+| Distance strategy for similarity search.
+
+| `cache_config`
+| `str`
+| `None`
+| Custom cache configuration XML. Uses a default indexed distributed cache if not set.
+
+| `create_cache`
+| `bool`
+| `True`
+| Whether to auto-create the cache if it does not exist.
+
+| `register_schema`
+| `bool`
+| `True`
+| Whether to auto-register the Protobuf schema.
+|===

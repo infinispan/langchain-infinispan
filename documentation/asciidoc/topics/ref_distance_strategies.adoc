@@ -1,0 +1,36 @@
+[id='ref_distance_strategies-{context}']
+= Distance strategies
+
+The following distance strategies are available for similarity search.
+
+[%header,cols="2,4"]
+|===
+| Strategy | Description
+
+| `COSINE`
+| Cosine similarity. Default strategy. Works with any vectors.
+
+| `L2`
+| Euclidean (squared L2) distance.
+
+| `INNER_PRODUCT`
+| Dot product similarity. Requires unit-length (normalized) vectors. On {brandname} 15.1+, the server rejects non-normalized vectors.
+
+| `MAX_INNER_PRODUCT`
+| Dot product similarity that allows non-normalized vectors. Relevance scores are normalized using `s / (1 + s)`.
+|===
+
+.Setting a distance strategy
+
+[source,python]
+----
+from langchain_infinispan import InfinispanVectorStore, DistanceStrategy
+
+vector_store = InfinispanVectorStore(
+    embedding=my_embeddings,
+    similarity=DistanceStrategy.L2,
+    ispn_url="http://localhost:11222",
+    ispn_user="admin",
+    ispn_password="password",
+)
+----

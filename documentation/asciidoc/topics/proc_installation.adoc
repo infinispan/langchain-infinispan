@@ -1,0 +1,26 @@
+[id='proc_installation-{context}']
+= Installing {langchain_ispn}
+
+Install the {langchain_ispn} package from PyPI.
+
+.Prerequisites
+
+* Python 3.10 or later
+* {brandname} 15 or later with vector search support
+
+.Procedure
+
+. Install the package:
++
+[source,bash]
+----
+pip install langchain-infinispan
+----
+
+. Verify the installation:
++
+[source,python]
+----
+from langchain_infinispan import InfinispanVectorStore
+print("langchain-infinispan installed successfully")
+----

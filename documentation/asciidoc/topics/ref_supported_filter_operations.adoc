@@ -1,0 +1,84 @@
+[id='ref_supported_filter_operations-{context}']
+= Supported filter operations
+
+The {brandname} vector store supports the following filter operations.
+
+.Comparators
+[%header,cols="1,2,2"]
+|===
+| Comparator | Description | Example
+
+| `EQ`
+| Equals
+| `Comparison(comparator=Comparator.EQ, attribute="country", value="BG")`
+
+| `NE`
+| Not equals
+| `Comparison(comparator=Comparator.NE, attribute="status", value="active")`
+
+| `GT`
+| Greater than
+| `Comparison(comparator=Comparator.GT, attribute="year", value=2020)`
+
+| `GTE`
+| Greater than or equal
+| `Comparison(comparator=Comparator.GTE, attribute="score", value=4.5)`
+
+| `LT`
+| Less than
+| `Comparison(comparator=Comparator.LT, attribute="price", value=100)`
+
+| `LTE`
+| Less than or equal
+| `Comparison(comparator=Comparator.LTE, attribute="rating", value=3)`
+
+| `IN`
+| In list
+| `Comparison(comparator=Comparator.IN, attribute="country", value=["BG", "NL"])`
+
+| `NIN`
+| Not in list
+| `Comparison(comparator=Comparator.NIN, attribute="status", value=["deleted"])`
+
+| `CONTAIN`
+| Contains substring
+| `Comparison(comparator=Comparator.CONTAIN, attribute="name", value="test")`
+
+| `LIKE`
+| Pattern match
+| `Comparison(comparator=Comparator.LIKE, attribute="name", value="test%")`
+|===
+
+.Logical operators
+[%header,cols="1,2"]
+|===
+| Operator | Description
+
+| `AND`
+| All conditions must match.
+
+| `OR`
+| At least one condition must match.
+
+| `NOT`
+| Negates the condition.
+|===
+
+.Combined filter example
+
+[source,python]
+----
+from langchain_core.structured_query import (
+    Comparator, Comparison, Operation, Operator,
+)
+
+filter_expr = Operation(
+    operator=Operator.AND,
+    arguments=[
+        Comparison(comparator=Comparator.EQ, attribute="country", value="BG"),
+        Comparison(comparator=Comparator.GT, attribute="year", value=2020),
+    ],
+)
+
+results = vector_store.similarity_search("hello", filter=filter_expr)
+----

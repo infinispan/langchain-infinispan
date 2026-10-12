@@ -1,0 +1,19 @@
+[id='con_vector_store-{context}']
+= How the vector store works
+
+The {brandname} vector store uses Protobuf schemas to define the structure of stored embeddings.
+When the vector store is first used, it:
+
+. Builds a Protobuf schema with dimension-specific message names (for example, `LangChainItem1536` for 1536-dimensional embeddings).
+. Registers the schema with {brandname} Server.
+. Creates an indexed distributed cache configured for vector search.
+
+Similarity search uses the {brandname} Ickle query language with the `<->` vector distance operator.
+The store supports metadata filtering through Ickle query joins on embedded metadata fields.
+
+Each document is stored as a Protobuf message containing:
+
+* `id` - unique identifier
+* `text` - the document text
+* `embedding` - the vector representation
+* `metadata` - repeated embedded messages with typed fields for strings, integers, and floats
