@@ -1,9 +1,29 @@
-# Contributing to langchain-infinispan
+Guidelines for contributing to langchain-infinispan
+====
 
-Thanks for your interest in contributing! This guide explains how to set up your
-environment so you can run the test suites and iterate reliably. It follows the
-current [LangChain contributing conventions](https://docs.langchain.com/oss/python/contributing/code),
-which use [`uv`](https://docs.astral.sh/uv/) for dependency management.
+Contributions from the community are essential in keeping langchain-infinispan strong and successful.
+
+This guide focuses on how to contribute back to langchain-infinispan using GitHub pull requests.
+
+## Legal
+
+All original contributions to langchain-infinispan are licensed under the
+[ASL - Apache License](https://www.apache.org/licenses/LICENSE-2.0),
+version 2.0 or later.
+
+All contributions are subject to the [Developer Certificate of Origin (DCO)](https://developercertificate.org/).
+
+## Getting Started
+
+If you are just getting started with Git, GitHub and/or contributing to langchain-infinispan there are a
+few prerequisite steps:
+
+* Make sure you have a [GitHub account](https://github.com/signup/free)
+* [Fork](https://help.github.com/articles/fork-a-repo/) the
+  langchain-infinispan [repository](https://github.com/infinispan/langchain-infinispan).
+  As discussed in the linked page, this also includes:
+    * [Setting](https://help.github.com/articles/set-up-git) up your local git install
+    * Cloning your fork
 
 ## Prerequisites
 
@@ -54,6 +74,19 @@ make dev_install
 `uv sync` reads `uv.lock`, so every contributor gets the exact same, reproducible
 set of dependencies. The lockfile **is committed** — do not delete it.
 
+## Create a topic branch
+
+Create a "topic" branch on which you will work. The convention is to name the branch
+using a short description of the change. Assuming you will be working from the main branch:
+
+```shell
+git checkout -b my-feature origin/main
+```
+
+## Code
+
+Code away...
+
 ## Running the test suites
 
 ### Unit tests
@@ -73,20 +106,11 @@ Integration tests exercise the client and query layer against a real
 the client, query, or serialization code.
 
 You do **not** need to start a server yourself. The test suite starts a fresh
-Infinispan container before the session and stops it afterwards, using a
-dedicated container so it never depends on — or interferes with — any server
-already running on your machine. This requires a container runtime (Docker or
-Podman); see [Prerequisites](#prerequisites).
+Infinispan container before the session and stops it afterwards.
 
 ```bash
 make integration_tests
-# equivalent to:
-#   uv run --group test --group test_integration pytest tests/integration_tests
 ```
-
-This runs both LangChain's standard `VectorStoreIntegrationTests` suite and the
-package's own integration tests. The suite's async tests are skipped
-(`has_async=False`) because the REST client is synchronous.
 
 #### Configuration
 
@@ -98,20 +122,7 @@ All of the following are optional environment variables:
 | `INFINISPAN_CONTAINER_RUNTIME` | auto-detect (Docker, then Podman) | Force a specific runtime. |
 | `INFINISPAN_USER` | `admin` | Server user. |
 | `INFINISPAN_PASSWORD` | `password` | Server password. |
-| `INFINISPAN_EXTERNAL_URL` | _(unset)_ | If set, the suite skips container management and runs against this already-running server instead (e.g. a CI service container). |
-
-Examples:
-
-```bash
-# Use a different Infinispan image
-INFINISPAN_IMAGE=infinispan/server:16.2 make integration_tests
-
-# Force Podman
-INFINISPAN_CONTAINER_RUNTIME=podman make integration_tests
-
-# Run against an already-running server, don't manage a container
-INFINISPAN_EXTERNAL_URL=http://localhost:11222 make integration_tests
-```
+| `INFINISPAN_EXTERNAL_URL` | _(unset)_ | If set, the suite skips container management and runs against this already-running server instead. |
 
 ## Linting, formatting, and typing
 
@@ -123,16 +134,46 @@ make format   # ruff format . && ruff check --fix .
 uv run --group typing mypy langchain_infinispan
 ```
 
-## Managing dependencies
+## Commit
 
-- **Add a runtime dependency:** `uv add <package>` (updates `pyproject.toml` and
-  `uv.lock`).
-- **Add a dev/test dependency:** `uv add --group test <package>` (or `lint` /
-  `typing`).
-- **Refresh the lockfile after editing `pyproject.toml` by hand:** `uv lock`.
+* Make commits of logical units.
+* Be sure to write a clear, concise commit message.
+* Avoid formatting changes to existing code as much as possible: they make the intent of your patch less clear.
+* Make sure you have added the necessary tests for your changes.
+* Run _all_ the tests to assure nothing else was accidentally broken.
 
-Always commit the resulting `uv.lock` change alongside your `pyproject.toml`
-change so the environment stays reproducible for everyone.
+_Prior to committing, if you want to pull in the latest upstream changes,
+please use rebasing rather than merging. Merging creates
+"merge commits" that muck up the project timeline._
+
+Add the original repository as a remote repository called upstream:
+
+```shell
+git remote add upstream git@github.com:infinispan/langchain-infinispan.git
+```
+
+If you want to rebase your branch on top of the main branch:
+
+```shell
+git pull --rebase upstream main
+```
+
+## Use of Generative AI
+
+Generative AI tools may be used to assist in writing code, tests, or documentation, provided that you fully understand every change you submit. The goal is to keep the codebase consistent and high-quality while respecting reviewers' limited time.
+
+If you use generative AI to assist with your contribution, all the following are required:
+
+* You understand the change. You must be able to explain what your code does and why. Submitting AI-generated code you do not understand is not acceptable.
+* You engage with review feedback. You are expected to respond to questions and comments from reviewers. If you use AI to help draft responses, you must edit and proofread them to ensure they are accurate and address the reviewer's point.
+* You can revise the code yourself. If a reviewer requests changes, you are responsible for addressing them, even if your AI tool is unable to produce a suitable fix.
+* You disclose AI agents usage. Include a note in the PR description indicating the usage of AI agents for generating complete solutions from a prompt (i.e. you do not need to mention a simple AI autocomplete). This helps reviewers calibrate their review.
+* You ensure licensing compliance. All generated code must be released under the Apache License, Version 2.0, the same license as this project. You are responsible for verifying that the tools you use do not introduce additional licensing restrictions.
+
+## Submit
+
+* Push your changes to a topic branch in your fork of the repository.
+* Initiate a [pull request](http://help.github.com/send-pull-requests/).
 
 ## Before opening a PR
 
@@ -144,9 +185,15 @@ make test
 uv run --group typing mypy langchain_infinispan
 ```
 
-Running the integration tests as well is appreciated — they only require a
-container runtime (Docker or Podman) and manage the Infinispan server for you:
+Running the integration tests as well is appreciated:
 
 ```bash
 make integration_tests
 ```
+
+## Contributing
+
+For contributing guidelines please refer to this document. All contributions are subject
+to [Developer Certificate of Origin (DCO)](https://developercertificate.org/).
+
+*The Infinispan project team*
